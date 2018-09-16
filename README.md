@@ -1,0 +1,2 @@
+# CurveFitting_Backpropagation_python
+Sinusoidal Function Curve fitting
