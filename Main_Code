@@ -1,0 +1,83 @@
+import random
+import struct
+import numpy as np
+from numpy import linalg as LA
+import matplotlib.pyplot as plt
+plt.close ('all')
+
+X= np.random.uniform(0,1,300)
+X = X.reshape(300,1)
+V = np.random.uniform(-0.1,0.1,300)
+V= V.reshape(300,1)
+D = np.sin(20*X)+3*X + V
+
+#Variables to use
+R = np.zeros((24,1))
+Z= np.zeros((300,1))
+E=np.zeros((300,1))
+eta =4
+Epoch=0
+Delta =1
+G_Init =0
+MSE = np.zeros((10000,1))
+
+
+#W1 = 0.0017*np.random.random((24,1))
+#W2 = 0.017*np.random.random((24,1))
+#W3 = 0.0017*np.random.random((24,1))
+#b= 0.017*np.random.random((1,1))
+
+W1 = 0.017*np.random.random((24,1))
+W2 = 0.017*np.random.random((24,1))
+W3 = 0.017*np.random.random((24,1))
+b= 0.017*np.random.random((1,1))
+
+W = np.concatenate((W1,W2,W3,b))
+
+while Delta> 1e-08 and Epoch <10000:
+    for i in range(300):
+        #Calculating all signals in the feed forward network
+        R = (X[i]*W[0:24])+ W[24:48]
+        R_h = np.tanh(R)
+        Z[i] = (R_h.T.dot(W[48:72]))+W[72:73]
+        #Calculating signals feedback network
+        E[i] = 2/float(300)*(D[i]-Z[i]) #2/float(300)*
+        R_h_FB = 1- R_h**2
+
+        G_1 = -E[i]*X[i]*(W[48:72]*R_h_FB) # Gradient for the 1st 24 weights
+        G_2 = -E[i]*(W[48:72]*R_h_FB) #Gradient for the 24 biases
+        G_3 = -E[i]*R_h
+        G_4 = -E[i].reshape(1,1)
+        G = np.concatenate((G_1,G_2,G_3,G_4))
+        W = W-eta*G
+    Out = D-Z
+    Delta = LA.norm(G-G_Init)
+    Cost =(1/2)*LA.norm(Out)
+    MSE[Epoch]= Cost
+    G_Init = G.copy()
+    Epoch = Epoch+1
+    
+y = MSE[0:Epoch]
+z = np.arange(0,Epoch,1)
+plt.plot(z,y)
+plt.xlabel("Epoch#")
+plt.ylabel("MSE")
+plt.title("MSE vs Epoch#")
+#plt.show()
+
+plt.figure()
+plt.scatter(X,D,c='g',marker='*', label = 'Original Data')
+plt.xlabel("X")
+plt.ylabel("D")
+plt.title("Given Sinusoidal Function")
+#plt.show()
+
+
+plt.figure()
+plt.scatter(X,D,c='g',marker='*', label = 'Original Data')
+plt.scatter(X,Z,c='r',marker = 'o', label = 'Fitted Data')
+plt.legend(loc='best')
+plt.xlabel("X")
+plt.ylabel("Y")
+plt.title("Curve Fitting")
+plt.show()
